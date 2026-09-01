@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ombor & Restoran Boshqaruvi</title>
-    <!-- Telegram WebApp SDK -->
+    <title>ERP Ombor, Retsept & Pererabotka</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- SheetJS (Excel Export) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -21,11 +19,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--light-bg); color: #333; padding-bottom: 30px; }
 
-        header { background-color: var(--primary-color); color: white; padding: 1rem; text-align: center; }
+        header { background-color: var(--primary-color); color: white; padding: 0.8rem; text-align: center; }
         header h1 { font-size: 1.1rem; }
 
         nav { display: flex; overflow-x: auto; background: white; border-bottom: 1px solid var(--border-color); }
-        nav button { flex: 1; padding: 0.8rem 0.4rem; border: none; background: none; font-weight: 600; font-size: 0.8rem; color: #555; white-space: nowrap; cursor: pointer; }
+        nav button { flex: 1; padding: 0.7rem 0.4rem; border: none; background: none; font-weight: 600; font-size: 0.78rem; color: #555; white-space: nowrap; cursor: pointer; }
         nav button.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
 
         .container { padding: 0.8rem; max-width: 950px; margin: 0 auto; }
@@ -42,54 +40,50 @@
         .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.65rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; width: 100%; }
         .btn-excel { background-color: #107c41; margin-top: 5px; }
         .btn-danger { background-color: var(--danger-color); }
-        .btn-process { background-color: var(--warning-color); }
+        .btn-process { background-color: var(--warning-color); color: #000; font-weight: bold; }
+        .btn-add { background-color: #64748b; font-size: 0.75rem; padding: 0.4rem; margin-top: 4px; }
 
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.5rem; }
         th, td { padding: 0.5rem 0.4rem; border-bottom: 1px solid var(--border-color); text-align: left; }
         th { background-color: #f8fafc; color: #475569; }
         .text-right { text-align: right; }
-        .text-center { text-align: center; }
         
         .badge { padding: 0.15rem 0.3rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
         .badge-success { background-color: #dcfce7; color: #15803d; }
         .badge-danger { background-color: #fee2e2; color: #b91c1c; }
-        .time-text { font-size: 0.7rem; color: #777; display: block; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
-        .stat-box { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
-        .stat-box small { font-size: 0.7rem; color: #666; display: block; }
-        .stat-box div { font-size: 1rem; font-weight: bold; margin-top: 2px; }
+        .multi-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .dynamic-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>📦 Ombor, Pererabotka & Sotuv Boshqaruvi</h1>
+        <h1>⚙️ Restoran ERP: Ombor, Retsept & Pererabotka</h1>
     </header>
 
     <nav>
         <button class="active" onclick="switchTab('ombor')">📦 Ombor</button>
         <button onclick="switchTab('kirim')">📥 Kirim</button>
         <button onclick="switchTab('pererabotka')">⚙️ Pererabotka</button>
-        <button onclick="switchTab('otkazish')">🔄 Bo'limga</button>
-        <button onclick="switchTab('chiqim')">📤 Sarfiyat</button>
+        <button onclick="switchTab('retsept')">📜 Retseptlar</button>
+        <button onclick="switchTab('otkazish')">🔄 O'tkazish</button>
         <button onclick="switchTab('sotuv')">💰 Sotuv</button>
         <button onclick="switchTab('hisobot')">📊 Moliya</button>
     </nav>
 
     <div class="container">
 
-        <!-- 1. OMBOR -->
+        <!-- 1. OMBOR QOLDIQLARI -->
         <div id="ombor" class="tab-content active">
             <div class="card">
-                <h2>➕ Yangi Mahsulot qo'shish</h2>
+                <h2>➕ Yangi Mahsulot / Taom Yaratish</h2>
                 <form id="form-add-product">
-                    <label>Mahsulot Nomi</label>
-                    <input type="text" id="prod-name" placeholder="Masalan: Go'sht, Qiymali Qiyma, Xamir" required>
-                    
+                    <label>Nomi</label>
+                    <input type="text" id="prod-name" placeholder="Masalan: Mol go'shti, Somsa, Lavash" required>
                     <div style="display: flex; gap: 8px;">
                         <div style="flex: 1;">
-                            <label>O'lchov Birligi</label>
+                            <label>Birligi</label>
                             <select id="prod-unit">
                                 <option value="kg">kg</option>
                                 <option value="Litr">Litr</option>
@@ -113,7 +107,7 @@
                         <thead>
                             <tr>
                                 <th>Mahsulot</th>
-                                <th class="text-right">Asosiy Sklad</th>
+                                <th class="text-right">Sklad</th>
                                 <th class="text-right">Oshxona</th>
                                 <th class="text-right">Shashlik</th>
                                 <th class="text-right">Somsa</th>
@@ -129,7 +123,7 @@
         <!-- 2. KIRIM -->
         <div id="kirim" class="tab-content">
             <div class="card">
-                <h2>📥 Asosiy Omborga Kirim Qilish</h2>
+                <h2>📥 Asosiy Skladga Kirim</h2>
                 <form id="form-kirim">
                     <label>Sana va Vaqt</label>
                     <input type="datetime-local" id="kirim-time" required>
@@ -140,7 +134,7 @@
                     <div style="display: flex; gap: 8px;">
                         <div style="flex: 1;">
                             <label>Miqdori</label>
-                            <input type="number" step="0.01" id="kirim-qty" placeholder="0.00" required>
+                            <input type="number" step="0.001" id="kirim-qty" placeholder="0.00" required>
                         </div>
                         <div style="flex: 1;">
                             <label>Jami Narxi (so'm)</label>
@@ -154,40 +148,71 @@
             </div>
         </div>
 
-        <!-- 3. PERERABOTKA (QAYTA ISHLASH) -->
+        <!-- 3. MURAKKAB PERERABOTKA (N:1 va 1:N) -->
         <div id="pererabotka" class="tab-content">
             <div class="card">
-                <h2>⚙️ Asosiy Omborda Pererabotka Qilish</h2>
-                <p style="font-size: 0.75rem; color: #666; margin-bottom: 8px;">
-                    Xomashyoni sarflab (chiqim qilib), yangi tayyor/yarim tayyor mahsulot hosil qilish (kirim qilish).
-                </p>
+                <h2>⚙️ Pererabotka & Bo'limga Jo'natish</h2>
                 <form id="form-pererabotka">
                     <label>Sana va Vaqt</label>
                     <input type="datetime-local" id="process-time" required>
 
-                    <div style="border: 1px dashed var(--danger-color); padding: 8px; border-radius: 6px;">
-                        <label style="color: var(--danger-color);">🔻 Ishlatiladigan Xomashyo (Chiqim):</label>
-                        <select id="process-out-id" required></select>
-                        <label style="margin-top: 4px;">Sarflangan Miqdor</label>
-                        <input type="number" step="0.01" id="process-out-qty" placeholder="0.00" required>
+                    <!-- Sarflanadigan xomashyolar (N ta) -->
+                    <div class="dynamic-box">
+                        <label style="color: var(--danger-color);">🔻 Ishlatiladigan Xomashyolar (Sklad):</label>
+                        <div id="process-out-container"></div>
+                        <button type="button" class="btn btn-add" onclick="addProcessOutRow()">+ Xomashyo qo'shish</button>
                     </div>
 
-                    <div style="border: 1px dashed var(--success-color); padding: 8px; border-radius: 6px; margin-top: 5px;">
-                        <label style="color: var(--success-color);">🔺 Hosil bo'ladigan Mahsulot (Kirim):</label>
-                        <select id="process-in-id" required></select>
-                        <label style="margin-top: 4px;">Hosil bo'lgan Miqdor</label>
-                        <input type="number" step="0.01" id="process-in-qty" placeholder="0.00" required>
+                    <!-- Hosil bo'ladigan mahsulotlar (N ta) -->
+                    <div class="dynamic-box">
+                        <label style="color: var(--success-color);">🔺 Hosil bo'ladigan Mahsulotlar:</label>
+                        <div id="process-in-container"></div>
+                        <button type="button" class="btn btn-add" onclick="addProcessInRow()">+ Mahsulot qo'shish</button>
                     </div>
+
+                    <!-- Qayerga jo'natish -->
+                    <label>Hosil bo'lgan mahsulot joylanadigan joy:</label>
+                    <select id="process-target-location">
+                        <option value="Sklad">📦 Asosiy Sklad</option>
+                        <option value="Oshxona">👨‍🍳 Oshxona</option>
+                        <option value="Shashlikxona">🍢 Shashlikxona</option>
+                        <option value="Somsaxona">🥟 Somsaxona</option>
+                        <option value="Fast-food">🍔 Fast-food</option>
+                    </select>
 
                     <button type="submit" class="btn btn-process">⚙️ Pererabotkani Bajarish</button>
                 </form>
             </div>
         </div>
 
-        <!-- 4. BO'LIMLARGA O'TKAZISH -->
+        <!-- 4. RETSEPTLAR (TEHKARTA) -->
+        <div id="retsept" class="tab-content">
+            <div class="card">
+                <h2>📜 Taom Retseptini Yaratish (Kalkulyatsiya)</h2>
+                <form id="form-retsept">
+                    <label>Tayyor Taom / Mahsulot</label>
+                    <select id="recipe-dish-id" required></select>
+
+                    <div class="dynamic-box">
+                        <label>Kerakli Xomashyolar (1 dona/porsiya uchun):</label>
+                        <div id="recipe-items-container"></div>
+                        <button type="button" class="btn btn-add" onclick="addRecipeRow()">+ Masalliq qo'shish</button>
+                    </div>
+
+                    <button type="submit" class="btn">📜 Retseptni Saqlash</button>
+                </form>
+            </div>
+            
+            <div class="card">
+                <h2>📋 Mavjud Retseptlar</h2>
+                <div id="recipes-list"></div>
+            </div>
+        </div>
+
+        <!-- 5. O'TKAZISH -->
         <div id="otkazish" class="tab-content">
             <div class="card">
-                <h2>🔄 Asosiy Ombordan Bo'limlarga O'tkazish</h2>
+                <h2>🔄 Skladdan Bo'limlarga O'tkazish</h2>
                 <form id="form-otkazish">
                     <label>Sana va Vaqt</label>
                     <input type="datetime-local" id="otkaz-time" required>
@@ -204,44 +229,17 @@
                     </select>
 
                     <label>Miqdori</label>
-                    <input type="number" step="0.01" id="otkaz-qty" placeholder="0.00" required>
+                    <input type="number" step="0.001" id="otkaz-qty" placeholder="0.00" required>
 
                     <button type="submit" class="btn">➡️ O'tkazish</button>
                 </form>
             </div>
         </div>
 
-        <!-- 5. CHIQIM / SARFIYAT -->
-        <div id="chiqim" class="tab-content">
-            <div class="card">
-                <h2>📤 Bo'limlardan Mahsulot Sarfi</h2>
-                <form id="form-chiqim">
-                    <label>Sana va Vaqt</label>
-                    <input type="datetime-local" id="chiqim-time" required>
-
-                    <label>Bo'lim</label>
-                    <select id="chiqim-bolim" required>
-                        <option value="Oshxona">Oshxona</option>
-                        <option value="Shashlikxona">Shashlikxona</option>
-                        <option value="Somsaxona">Somsaxona</option>
-                        <option value="Fast-food">Fast-food</option>
-                    </select>
-
-                    <label>Mahsulot</label>
-                    <select id="chiqim-prod-id" required></select>
-
-                    <label>Ishlatilgan Miqdor</label>
-                    <input type="number" step="0.01" id="chiqim-qty" placeholder="0.00" required>
-
-                    <button type="submit" class="btn">📤 Sarfiyatni Saqlash</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- 6. SOTUV (KASSA) -->
+        <!-- 6. SOTUV (AVTO-SPISANIYE BILAN) -->
         <div id="sotuv" class="tab-content">
             <div class="card">
-                <h2>💰 Bo'limlar Tushumi (Sotuv)</h2>
+                <h2>💰 Sotuv (Retsept bo'yicha Avto-Chiqim)</h2>
                 <form id="form-sotuv">
                     <label>Sana va Vaqt</label>
                     <input type="datetime-local" id="sotuv-time" required>
@@ -254,13 +252,21 @@
                         <option value="Fast-food">Fast-food</option>
                     </select>
 
-                    <label>Sotuv Summasi (so'm)</label>
-                    <input type="number" id="sotuv-amount" placeholder="0" required>
+                    <label>Sotilgan Taom / Mahsulot</label>
+                    <select id="sotuv-dish-id" required></select>
 
-                    <label>Izoh</label>
-                    <input type="text" id="sotuv-note" placeholder="Kassa tushumi">
+                    <div style="display: flex; gap: 8px;">
+                        <div style="flex: 1;">
+                            <label>Soni / Porsiya</label>
+                            <input type="number" step="1" id="sotuv-count" placeholder="1" required>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Jami Sotuv Summasi (so'm)</label>
+                            <input type="number" id="sotuv-amount" placeholder="0" required>
+                        </div>
+                    </div>
 
-                    <button type="submit" class="btn" style="background-color: var(--success-color);">💰 Sotuvni Saqlash</button>
+                    <button type="submit" class="btn" style="background-color: var(--success-color);">💰 Sotuv va Avto-Chiqim</button>
                 </form>
             </div>
         </div>
@@ -268,9 +274,7 @@
         <!-- 7. MOLIYA VA FOYDA/ZARAR -->
         <div id="hisobot" class="tab-content">
             <div class="card">
-                <h2>📊 Bo'limlar Bo'yicha Moliya & Foyda</h2>
-                <div class="stat-grid" id="financial-summary"></div>
-
+                <h2>📊 Moliya & Foyda / Zarar</h2>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -287,7 +291,7 @@
             </div>
 
             <div class="card">
-                <h2>📑 Excel Hisobot</h2>
+                <h2>📑 Excel Export</h2>
                 <button class="btn btn-excel" onclick="exportToExcel()">📑 Barcha Ma'lumotlarni Excel'ga Yuklash</button>
                 <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
                 <button class="btn btn-danger" onclick="clearData()">🗑 Barcha ma'lumotlarni o'chirish</button>
@@ -297,17 +301,17 @@
     </div>
 
     <script>
-        // --- TELEGRAM WEB APP INIT ---
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); tg.ready(); }
 
-        // --- LOCALSTORAGE & STATE ---
-        let state = JSON.parse(localStorage.getItem('ombor_db')) || {
+        let state = JSON.parse(localStorage.getItem('ombor_erp_db')) || {
             products: [
                 { id: 101, name: "Go'sht (Mol)", unit: "kg", min: 20 },
                 { id: 102, name: "Un", unit: "kg", min: 50 },
-                { id: 103, name: "Qiymali Qiyma", unit: "kg", min: 10 }
+                { id: 103, name: "Piyoz", unit: "kg", min: 30 },
+                { id: 104, name: "Somsa", unit: "Dona", min: 10 }
             ],
+            recipes: {}, // dishId: [ {ingId, qty} ]
             kirim: [],
             pererabotka: [],
             otkazish: [],
@@ -319,48 +323,20 @@
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             const formatted = now.toISOString().slice(0, 16);
-            
-            ['kirim-time', 'process-time', 'otkaz-time', 'chiqim-time', 'sotuv-time'].forEach(id => {
+            ['kirim-time', 'process-time', 'otkaz-time', 'sotuv-time'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.value = formatted;
             });
         }
 
-        function formatDisplayDate(isoString) {
-            if(!isoString) return '-';
-            const d = new Date(isoString);
-            if(isNaN(d)) return isoString;
-            return `${d.toLocaleDateString('uz-UZ')} ${d.toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})}`;
-        }
-
         function saveData() {
-            localStorage.setItem('ombor_db', JSON.stringify(state));
+            localStorage.setItem('ombor_erp_db', JSON.stringify(state));
             renderAll();
         }
 
         function getProductName(prodId) {
             const prod = state.products.find(p => p.id == prodId);
             return prod ? prod.name : 'Noma\'lum';
-        }
-
-        // O'rtacha o'lchangan tannarxni hisoblash
-        function getAvgPrice(prodId) {
-            let totalQty = 0;
-            let totalCost = 0;
-
-            state.kirim.filter(k => k.prodId == prodId).forEach(k => {
-                totalQty += k.qty;
-                totalCost += k.price;
-            });
-
-            // Pererabotka orqali kirim bo'lgan bo'lsa
-            state.pererabotka.filter(p => p.inProdId == prodId).forEach(p => {
-                let outAvgPrice = getAvgPrice(p.outProdId);
-                totalQty += p.inQty;
-                totalCost += (p.outQty * outAvgPrice);
-            });
-
-            return totalQty > 0 ? (totalCost / totalQty) : 0;
         }
 
         function switchTab(tabId) {
@@ -370,21 +346,77 @@
             event.target.classList.add('active');
         }
 
-        // --- STOK VA QOLDIQLAR HISOBI ---
-        function getProductStock(prodId) {
-            let mainKirim = state.kirim.filter(k => k.prodId == prodId).reduce((s, k) => s + k.qty, 0);
-            
-            // Pererabotka ta'siri
-            let mainProcessIn = state.pererabotka.filter(p => p.inProdId == prodId).reduce((s, p) => s + p.inQty, 0);
-            let mainProcessOut = state.pererabotka.filter(p => p.outProdId == prodId).reduce((s, p) => s + p.outQty, 0);
+        // --- DINAMIK QATORLAR (PERERABOTKA VA RETSEPT) ---
+        function addProcessOutRow() {
+            const container = document.getElementById('process-out-container');
+            const div = document.createElement('div');
+            div.className = 'multi-row';
+            div.innerHTML = `
+                <select class="p-out-id">${getProductOptions()}</select>
+                <input type="number" step="0.001" class="p-out-qty" placeholder="Miqdor" style="width: 100px;">
+                <button type="button" onclick="this.parentElement.remove()" style="color:red; background:none; border:none; font-weight:bold;">✕</button>
+            `;
+            container.appendChild(div);
+        }
 
-            let mainOtkaz = state.otkazish.filter(o => o.prodId == prodId).reduce((s, o) => s + o.qty, 0);
+        function addProcessInRow() {
+            const container = document.getElementById('process-in-container');
+            const div = document.createElement('div');
+            div.className = 'multi-row';
+            div.innerHTML = `
+                <select class="p-in-id">${getProductOptions()}</select>
+                <input type="number" step="0.001" class="p-in-qty" placeholder="Miqdor" style="width: 100px;">
+                <button type="button" onclick="this.parentElement.remove()" style="color:red; background:none; border:none; font-weight:bold;">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addRecipeRow() {
+            const container = document.getElementById('recipe-items-container');
+            const div = document.createElement('div');
+            div.className = 'multi-row';
+            div.innerHTML = `
+                <select class="r-ing-id">${getProductOptions()}</select>
+                <input type="number" step="0.001" class="r-ing-qty" placeholder="Miqdor (masalan 0.1)" style="width: 120px;">
+                <button type="button" onclick="this.parentElement.remove()" style="color:red; background:none; border:none; font-weight:bold;">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function getProductOptions() {
+            return state.products.map(p => `<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
+        }
+
+        // --- O'RTACHA TANNARX VA STOK ---
+        function getAvgPrice(prodId) {
+            let totalQty = 0, totalCost = 0;
+            state.kirim.filter(k => k.prodId == prodId).forEach(k => { totalQty += k.qty; totalCost += k.price; });
+            return totalQty > 0 ? (totalCost / totalQty) : 0;
+        }
+
+        function getProductStock(prodId) {
+            let skladKirim = state.kirim.filter(k => k.prodId == prodId).reduce((s, k) => s + k.qty, 0);
             
-            let omborQoldiq = (mainKirim + mainProcessIn) - (mainProcessOut + mainOtkaz);
+            // Pererabotka
+            state.pererabotka.forEach(p => {
+                p.outItems.forEach(out => { if(out.prodId == prodId) skladKirim -= out.qty; });
+                p.inItems.forEach(inItem => { 
+                    if(inItem.prodId == prodId && p.target === 'Sklad') skladKirim += inItem.qty; 
+                });
+            });
+
+            let skladOtkaz = state.otkazish.filter(o => o.prodId == prodId).reduce((s, o) => s + o.qty, 0);
+            let omborQoldiq = skladKirim - skladOtkaz;
 
             let bolimlar = { Oshxona: 0, Shashlikxona: 0, Somsaxona: 0, "Fast-food": 0 };
             ["Oshxona", "Shashlikxona", "Somsaxona", "Fast-food"].forEach(b => {
                 let bKirim = state.otkazish.filter(o => o.prodId == prodId && o.bolim === b).reduce((s, o) => s + o.qty, 0);
+                
+                // Direct Pererabotka to Department
+                state.pererabotka.filter(p => p.target === b).forEach(p => {
+                    p.inItems.forEach(inItem => { if(inItem.prodId == prodId) bKirim += inItem.qty; });
+                });
+
                 let bChiqim = state.chiqim.filter(c => c.prodId == prodId && c.bolim === b).reduce((s, c) => s + c.qty, 0);
                 bolimlar[b] = bKirim - bChiqim;
             });
@@ -396,87 +428,70 @@
         function renderAll() {
             renderDropdowns();
             renderOmbor();
+            renderRecipes();
             renderFinance();
         }
 
         function renderDropdowns() {
-            const selects = ['kirim-prod-id', 'process-out-id', 'process-in-id', 'otkaz-prod-id', 'chiqim-prod-id'];
-            selects.forEach(id => {
+            const opts = getProductOptions();
+            ['kirim-prod-id', 'recipe-dish-id', 'otkaz-prod-id', 'sotuv-dish-id'].forEach(id => {
                 const el = document.getElementById(id);
-                if(el) {
-                    el.innerHTML = state.products.map(p => `<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
-                }
+                if(el) el.innerHTML = opts;
             });
         }
 
         function renderOmbor() {
             const tbody = document.getElementById('ombor-table');
             tbody.innerHTML = '';
-
             state.products.forEach(p => {
                 let stock = getProductStock(p.id);
                 let badgeClass = stock.omborQoldiq <= p.min ? 'badge-danger' : 'badge-success';
-
                 tbody.innerHTML += `
                     <tr>
-                        <td><b>${p.name}</b> <br><small class="badge ${badgeClass}">${stock.omborQoldiq.toFixed(1)} ${p.unit}</small></td>
-                        <td class="text-right"><b>${stock.omborQoldiq.toFixed(1)}</b></td>
-                        <td class="text-right">${stock.bolimlar.Oshxona.toFixed(1)}</td>
-                        <td class="text-right">${stock.bolimlar.Shashlikxona.toFixed(1)}</td>
-                        <td class="text-right">${stock.bolimlar.Somsaxona.toFixed(1)}</td>
-                        <td class="text-right">${stock.bolimlar['Fast-food'].toFixed(1)}</td>
+                        <td><b>${p.name}</b> <br><small class="badge ${badgeClass}">${stock.omborQoldiq.toFixed(2)} ${p.unit}</small></td>
+                        <td class="text-right"><b>${stock.omborQoldiq.toFixed(2)}</b></td>
+                        <td class="text-right">${stock.bolimlar.Oshxona.toFixed(2)}</td>
+                        <td class="text-right">${stock.bolimlar.Shashlikxona.toFixed(2)}</td>
+                        <td class="text-right">${stock.bolimlar.Somsaxona.toFixed(2)}</td>
+                        <td class="text-right">${stock.bolimlar['Fast-food'].toFixed(2)}</td>
                     </tr>
                 `;
             });
         }
 
+        function renderRecipes() {
+            const box = document.getElementById('recipes-list');
+            box.innerHTML = '';
+            for(let dishId in state.recipes) {
+                let dishName = getProductName(dishId);
+                let itemsStr = state.recipes[dishId].map(i => `${getProductName(i.ingId)}: ${i.qty}`).join(', ');
+                box.innerHTML += `<p style="font-size:0.8rem; border-bottom:1px solid #eee; padding:4px 0;"><b>${dishName}:</b> ${itemsStr}</p>`;
+            }
+        }
+
         function renderFinance() {
             const bolimlar = ["Oshxona", "Shashlikxona", "Somsaxona", "Fast-food"];
             const tbody = document.getElementById('finance-table');
-            const summaryDiv = document.getElementById('financial-summary');
             tbody.innerHTML = '';
-
-            let totalSotuvAll = 0;
-            let totalCostAll = 0;
 
             bolimlar.forEach(b => {
                 let bSotuv = state.sotuv.filter(s => s.bolim === b).reduce((sum, s) => sum + s.amount, 0);
-                
-                // Sarflangan mahsulotlar tannarxi
                 let bCost = 0;
                 state.chiqim.filter(c => c.bolim === b).forEach(c => {
-                    let avgP = getAvgPrice(c.prodId);
-                    bCost += (c.qty * avgP);
+                    bCost += (c.qty * getAvgPrice(c.prodId));
                 });
-
                 let profit = bSotuv - bCost;
-                totalSotuvAll += bSotuv;
-                totalCostAll += bCost;
-
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${b}</b></td>
-                        <td class="text-right" style="color: var(--success-color); font-weight:bold;">${bSotuv.toLocaleString()} so'm</td>
+                        <td class="text-right" style="color:var(--success-color); font-weight:bold;">${bSotuv.toLocaleString()} so'm</td>
                         <td class="text-right">${Math.round(bCost).toLocaleString()} so'm</td>
-                        <td class="text-right" style="color: ${profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">
+                        <td class="text-right" style="color:${profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">
                             ${Math.round(profit).toLocaleString()} so'm
                         </td>
                     </tr>
                 `;
             });
-
-            let totalProfitAll = totalSotuvAll - totalCostAll;
-
-            summaryDiv.innerHTML = `
-                <div class="stat-box">
-                    <small>Jami Sotuv Tushumi</small>
-                    <div style="color: var(--success-color);">${totalSotuvAll.toLocaleString()} so'm</div>
-                </div>
-                <div class="stat-box">
-                    <small>Jami Sof Foyda</small>
-                    <div style="color: ${totalProfitAll >= 0 ? 'var(--primary-color)' : 'var(--danger-color)'};">${Math.round(totalProfitAll).toLocaleString()} so'm</div>
-                </div>
-            `;
         }
 
         // --- FORM EVENTS ---
@@ -488,9 +503,7 @@
                 unit: document.getElementById('prod-unit').value,
                 min: parseFloat(document.getElementById('prod-min').value)
             });
-            saveData();
-            e.target.reset();
-            alert("Yangi mahsulot qo'shildi!");
+            saveData(); e.target.reset(); alert("Mahsulot qo'shildi!");
         });
 
         document.getElementById('form-kirim').addEventListener('submit', (e) => {
@@ -502,131 +515,113 @@
                 price: parseFloat(document.getElementById('kirim-price').value),
                 supplier: document.getElementById('kirim-supplier').value
             });
-            saveData();
-            document.getElementById('kirim-qty').value = '';
-            document.getElementById('kirim-price').value = '';
-            setNowDateInputs();
-            alert("Asosiy omborga kirim qilindi!");
+            saveData(); setNowDateInputs(); alert("Kirim saqlandi!");
         });
 
         document.getElementById('form-pererabotka').addEventListener('submit', (e) => {
             e.preventDefault();
-            let outProdId = parseInt(document.getElementById('process-out-id').value);
-            let outQty = parseFloat(document.getElementById('process-out-qty').value);
-            let stock = getProductStock(outProdId);
+            let outItems = [], inItems = [];
 
-            if (outQty > stock.omborQoldiq) {
-                alert("⚠️ Omborda yetarli xomashyo yo'q! Qoldiq: " + stock.omborQoldiq);
+            document.querySelectorAll('#process-out-container .multi-row').forEach(row => {
+                let prodId = parseInt(row.querySelector('.p-out-id').value);
+                let qty = parseFloat(row.querySelector('.p-out-qty').value);
+                if(prodId && qty) outItems.push({ prodId, qty });
+            });
+
+            document.querySelectorAll('#process-in-container .multi-row').forEach(row => {
+                let prodId = parseInt(row.querySelector('.p-in-id').value);
+                let qty = parseFloat(row.querySelector('.p-in-qty').value);
+                if(prodId && qty) inItems.push({ prodId, qty });
+            });
+
+            if(!outItems.length || !inItems.length) {
+                alert("⚠️ Kamida bitta sarflanuvchi va hosil bo'luvchi mahsulot kiriting!");
                 return;
             }
 
             state.pererabotka.push({
                 datetime: document.getElementById('process-time').value,
-                outProdId: outProdId,
-                outQty: outQty,
-                inProdId: parseInt(document.getElementById('process-in-id').value),
-                inQty: parseFloat(document.getElementById('process-in-qty').value)
+                outItems: outItems,
+                inItems: inItems,
+                target: document.getElementById('process-target-location').value
             });
-            saveData();
-            document.getElementById('process-out-qty').value = '';
-            document.getElementById('process-in-qty').value = '';
-            setNowDateInputs();
-            alert("Pererabotka bajarildi!");
+
+            saveData(); setNowDateInputs(); alert("Pererabotka bajarildi va belgilangan joyga jo'natildi!");
+        });
+
+        document.getElementById('form-retsept').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let dishId = document.getElementById('recipe-dish-id').value;
+            let items = [];
+
+            document.querySelectorAll('#recipe-items-container .multi-row').forEach(row => {
+                let ingId = parseInt(row.querySelector('.r-ing-id').value);
+                let qty = parseFloat(row.querySelector('.r-ing-qty').value);
+                if(ingId && qty) items.push({ ingId, qty });
+            });
+
+            state.recipes[dishId] = items;
+            saveData(); alert("Retsept saqlandi!");
         });
 
         document.getElementById('form-otkazish').addEventListener('submit', (e) => {
             e.preventDefault();
-            let prodId = parseInt(document.getElementById('otkaz-prod-id').value);
-            let qty = parseFloat(document.getElementById('otkaz-qty').value);
-            let stock = getProductStock(prodId);
-
-            if (qty > stock.omborQoldiq) {
-                alert("⚠️ Asosiy omborda yetarli mahsulot yo'q! Sklad qoldig'i: " + stock.omborQoldiq);
-                return;
-            }
-
             state.otkazish.push({
                 datetime: document.getElementById('otkaz-time').value,
-                prodId: prodId,
+                prodId: parseInt(document.getElementById('otkaz-prod-id').value),
                 bolim: document.getElementById('otkaz-bolim').value,
-                qty: qty
+                qty: parseFloat(document.getElementById('otkaz-qty').value)
             });
-            saveData();
-            document.getElementById('otkaz-qty').value = '';
-            setNowDateInputs();
-            alert("Bo'limga o'tkazildi!");
-        });
-
-        document.getElementById('form-chiqim').addEventListener('submit', (e) => {
-            e.preventDefault();
-            state.chiqim.push({
-                datetime: document.getElementById('chiqim-time').value,
-                bolim: document.getElementById('chiqim-bolim').value,
-                prodId: parseInt(document.getElementById('chiqim-prod-id').value),
-                qty: parseFloat(document.getElementById('chiqim-qty').value)
-            });
-            saveData();
-            document.getElementById('chiqim-qty').value = '';
-            setNowDateInputs();
-            alert("Sarfiyat saqlandi!");
+            saveData(); setNowDateInputs(); alert("O'tkazildi!");
         });
 
         document.getElementById('form-sotuv').addEventListener('submit', (e) => {
             e.preventDefault();
-            state.sotuv.push({
-                datetime: document.getElementById('sotuv-time').value,
-                bolim: document.getElementById('sotuv-bolim').value,
-                amount: parseFloat(document.getElementById('sotuv-amount').value),
-                note: document.getElementById('sotuv-note').value
-            });
-            saveData();
-            document.getElementById('sotuv-amount').value = '';
-            document.getElementById('sotuv-note').value = '';
-            setNowDateInputs();
-            alert("Sotuv tushumi saqlandi!");
+            let datetime = document.getElementById('sotuv-time').value;
+            let bolim = document.getElementById('sotuv-bolim').value;
+            let dishId = document.getElementById('sotuv-dish-id').value;
+            let count = parseInt(document.getElementById('sotuv-count').value);
+            let amount = parseFloat(document.getElementById('sotuv-amount').value);
+
+            // 1. Sotuvni saqlash
+            state.sotuv.push({ datetime, bolim, dishId, count, amount });
+
+            // 2. Retsept bo'yicha Avto-Chiqim (Spisaniye)
+            if(state.recipes[dishId]) {
+                state.recipes[dishId].forEach(item => {
+                    state.chiqim.push({
+                        datetime: datetime,
+                        bolim: bolim,
+                        prodId: item.ingId,
+                        qty: item.qty * count
+                    });
+                });
+            } else {
+                // Agar retsept yo'q bo'lsa, taomning o'zini chiqim qiladi
+                state.chiqim.push({ datetime, bolim, prodId: parseInt(dishId), qty: count });
+            }
+
+            saveData(); setNowDateInputs(); alert("Sotuv saqlandi va masalliqlar avtomatik chiqim qilindi!");
         });
 
-        // --- EXCEL EXPORT ---
         function exportToExcel() {
-            let workbook = XLSX.utils.book_new();
-
-            // 1. Qoldiqlar
-            let qoldiqData = state.products.map(p => {
-                let stock = getProductStock(p.id);
-                return {
-                    "Mahsulot Nomi": p.name,
-                    "Birligi": p.unit,
-                    "Asosiy Sklad": stock.omborQoldiq,
-                    "Oshxona": stock.bolimlar.Oshxona,
-                    "Shashlikxona": stock.bolimlar.Shashlikxona,
-                    "Somsaxona": stock.bolimlar.Somsaxona,
-                    "Fast-food": stock.bolimlar['Fast-food']
-                };
+            let wb = XLSX.utils.book_new();
+            let qData = state.products.map(p => {
+                let s = getProductStock(p.id);
+                return { "Mahsulot": p.name, "Birligi": p.unit, "Sklad": s.omborQoldiq, "Oshxona": s.bolimlar.Oshxona, "Shashlik": s.bolimlar.Shashlikxona, "Somsa": s.bolimlar.Somsaxona, "Fast-Food": s.bolimlar['Fast-food'] };
             });
-            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(qoldiqData), "Qoldiqlar");
-
-            // 2. Sotuv va Moliya
-            let sotuvData = state.sotuv.map(s => ({
-                "Sana": formatDisplayDate(s.datetime),
-                "Bo'lim": s.bolim,
-                "Summa (so'm)": s.amount,
-                "Izoh": s.note
-            }));
-            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sotuvData), "Sotuvlar");
-
-            XLSX.writeFile(workbook, `Moliya_Ombor_Hisoboti_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(qData), "Qoldiqlar");
+            XLSX.writeFile(wb, `ERP_Hisobot_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
         function clearData() {
-            if (confirm("Rostdan ham barcha ma'lumotlarni o'chirmoqchimisiz?")) {
-                localStorage.removeItem('ombor_db');
-                location.reload();
+            if(confirm("Barcha ma'lumotlarni o'chirishga ishonchingiz komilmi?")) {
+                localStorage.removeItem('ombor_erp_db'); location.reload();
             }
         }
 
-        // Init App
-        setNowDateInputs();
-        renderAll();
+        // Dastlabki qatorlarni tayyorlash
+        addProcessOutRow(); addProcessInRow(); addRecipeRow(); setNowDateInputs(); renderAll();
     </script>
 </body>
 </html>
