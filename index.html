@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ombor & Restoran Boshqaruvi</title>
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- SheetJS (Excel Export va Import) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -48,6 +50,7 @@
         .badge { padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         .badge-success { background-color: #dcfce7; color: #15803d; }
         .badge-danger { background-color: #fee2e2; color: #b91c1c; }
+        .time-text { font-size: 0.75rem; color: #777; display: block; }
     </style>
 </head>
 <body>
@@ -61,11 +64,13 @@
         <button onclick="switchTab('kirim')">📥 Kirim</button>
         <button onclick="switchTab('otkazish')">🔄 Bo'limga</button>
         <button onclick="switchTab('chiqim')">📤 Chiqim</button>
-        <button onclick="switchTab('hisobot')">📊 Excel Hisobot</button>
+        <button onclick="switchTab('tarix')">🕒 Tarix</button>
+        <button onclick="switchTab('hisobot')">📊 Excel</button>
     </nav>
 
     <div class="container">
 
+        <!-- 1. OMBOR -->
         <div id="ombor" class="tab-content active">
             <div class="card">
                 <h2>➕ Yangi Mahsulot Kiritish</h2>
@@ -111,10 +116,14 @@
             </div>
         </div>
 
+        <!-- 2. KIRIM -->
         <div id="kirim" class="tab-content">
             <div class="card">
                 <h2>📥 Omborga Kirim Qilish</h2>
                 <form id="form-kirim">
+                    <label>Sana va Vaqt</label>
+                    <input type="datetime-local" id="kirim-time" required>
+
                     <label>Mahsulot</label>
                     <select id="kirim-prod-id" required></select>
                     
@@ -135,10 +144,14 @@
             </div>
         </div>
 
+        <!-- 3. BO'LIMLARGA O'TKAZISH -->
         <div id="otkazish" class="tab-content">
             <div class="card">
                 <h2>🔄 Ombordan Bo'limga O'tkazish</h2>
                 <form id="form-otkazish">
+                    <label>Sana va Vaqt</label>
+                    <input type="datetime-local" id="otkaz-time" required>
+
                     <label>Mahsulot</label>
                     <select id="otkaz-prod-id" required></select>
                     
@@ -157,10 +170,14 @@
             </div>
         </div>
 
+        <!-- 4. CHIQIM / SARFIYAT -->
         <div id="chiqim" class="tab-content">
             <div class="card">
                 <h2>📤 Bo'limdan Chiqim (Sarfiyat)</h2>
                 <form id="form-chiqim">
+                    <label>Sana va Vaqt</label>
+                    <input type="datetime-local" id="chiqim-time" required>
+
                     <label>Bo'lim</label>
                     <select id="chiqim-bolim" required>
                         <option value="Oshxona">Oshxona</option>
@@ -179,11 +196,32 @@
             </div>
         </div>
 
+        <!-- 5. AMALLAR TARIXI -->
+        <div id="tarix" class="tab-content">
+            <div class="card">
+                <h2>🕒 So'nggi Operatsiyalar Tarixi</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sana va Vaqt</th>
+                                <th>Turi</th>
+                                <th>Mahsulot</th>
+                                <th class="text-right">Miqdor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tarix-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. EXCEL EXPORT -->
         <div id="hisobot" class="tab-content">
             <div class="card">
-                <h2>📊 Excel Export & Import</h2>
+                <h2>📊 Excel Export</h2>
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">
-                    Barcha ombor va hisob-kitob ma'lumotlarini Excel (XLSX) shaklida yuklab olishingiz mumkin.
+                    Kiritilgan sana va vaqtlari ko'rsatilgan Excel hisobotini yuklab oling.
                 </p>
                 <button class="btn btn-excel" onclick="exportToExcel()">📑 Excel Faylga Yuklash (.xlsx)</button>
                 
@@ -215,9 +253,35 @@
             chiqim: []
         };
 
+        // Standart holatda inputga hozirgi vaqtni qo'yish
+        function setNowDateInputs() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const formatted = now.toISOString().slice(0, 16);
+            
+            document.getElementById('kirim-time').value = formatted;
+            document.getElementById('otkaz-time').value = formatted;
+            document.getElementById('chiqim-time').value = formatted;
+        }
+
+        // Vaqtni o'qilishi qulay formatga o'tkazish
+        function formatDisplayDate(isoString) {
+            if(!isoString) return '-';
+            const d = new Date(isoString);
+            if(isNaN(d)) return isoString;
+            const date = d.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const time = d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+            return `${date} ${time}`;
+        }
+
         function saveData() {
             localStorage.setItem('ombor_db', JSON.stringify(state));
             renderAll();
+        }
+
+        function getProductName(prodId) {
+            const prod = state.products.find(p => p.id == prodId);
+            return prod ? prod.name : 'Noma\'lum';
         }
 
         // --- TAB SWITCHER ---
@@ -248,6 +312,7 @@
         function renderAll() {
             renderDropdowns();
             renderOmbor();
+            renderTarix();
         }
 
         function renderDropdowns() {
@@ -278,6 +343,29 @@
             });
         }
 
+        function renderTarix() {
+            const tbody = document.getElementById('tarix-table');
+            tbody.innerHTML = '';
+
+            let history = [];
+            state.kirim.forEach(k => history.push({ datetime: k.datetime, type: "📥 Kirim", prodName: getProductName(k.prodId), qty: `+${k.qty}` }));
+            state.otkazish.forEach(o => history.push({ datetime: o.datetime, type: `🔄 ${o.bolim}ga`, prodName: getProductName(o.prodId), qty: `${o.qty}` }));
+            state.chiqim.forEach(c => history.push({ datetime: c.datetime, type: `📤 Chiqim (${c.bolim})`, prodName: getProductName(c.prodId), qty: `-${c.qty}` }));
+
+            history.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+            history.slice(0, 30).forEach(h => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="time-text">${formatDisplayDate(h.datetime)}</span></td>
+                        <td><b>${h.type}</b></td>
+                        <td>${h.prodName}</td>
+                        <td class="text-right"><b>${h.qty}</b></td>
+                    </tr>
+                `;
+            });
+        }
+
         // --- FORM EVENTS ---
         document.getElementById('form-add-product').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -295,7 +383,7 @@
         document.getElementById('form-kirim').addEventListener('submit', (e) => {
             e.preventDefault();
             state.kirim.push({
-                date: new Date().toLocaleDateString(),
+                datetime: document.getElementById('kirim-time').value,
                 prodId: parseInt(document.getElementById('kirim-prod-id').value),
                 qty: parseFloat(document.getElementById('kirim-qty').value),
                 price: parseFloat(document.getElementById('kirim-price').value),
@@ -304,6 +392,7 @@
             saveData();
             document.getElementById('kirim-qty').value = '';
             document.getElementById('kirim-price').value = '';
+            setNowDateInputs();
             alert("Kirim saqlandi!");
         });
 
@@ -319,32 +408,37 @@
             }
 
             state.otkazish.push({
-                date: new Date().toLocaleDateString(),
+                datetime: document.getElementById('otkaz-time').value,
                 prodId: prodId,
                 bolim: document.getElementById('otkaz-bolim').value,
                 qty: qty
             });
             saveData();
             document.getElementById('otkaz-qty').value = '';
+            setNowDateInputs();
             alert("Bo'limga o'tkazildi!");
         });
 
         document.getElementById('form-chiqim').addEventListener('submit', (e) => {
             e.preventDefault();
             state.chiqim.push({
-                date: new Date().toLocaleDateString(),
+                datetime: document.getElementById('chiqim-time').value,
                 bolim: document.getElementById('chiqim-bolim').value,
                 prodId: parseInt(document.getElementById('chiqim-prod-id').value),
                 qty: parseFloat(document.getElementById('chiqim-qty').value)
             });
             saveData();
             document.getElementById('chiqim-qty').value = '';
+            setNowDateInputs();
             alert("Chiqim saqlandi!");
         });
 
-        // --- EXCEL EXPORT FUNCTION ---
+        // --- EXCEL EXPORT ---
         function exportToExcel() {
-            let exportData = state.products.map(p => {
+            let workbook = XLSX.utils.book_new();
+
+            // 1. Qoldiqlar
+            let qoldiqData = state.products.map(p => {
                 let stock = getProductStock(p.id);
                 return {
                     "Mahsulot Nomi": p.name,
@@ -352,14 +446,33 @@
                     "Ombor Qoldig'i": stock.omborQoldiq,
                     "Oshxona Qoldig'i": stock.bolimlar.Oshxona,
                     "Shashlikxona Qoldig'i": stock.bolimlar.Shashlikxona,
-                    "Somsaxona Qoldig'i": stock.bolimlar.Somsaxona,
-                    "Min. Zaxira": p.min
+                    "Somsaxona Qoldig'i": stock.bolimlar.Somsaxona
                 };
             });
+            let wsQoldiq = XLSX.utils.json_to_sheet(qoldiqData);
+            XLSX.utils.book_append_sheet(workbook, wsQoldiq, "Joriy Qoldiqlar");
 
-            let worksheet = XLSX.utils.json_to_sheet(exportData);
-            let workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Ombor Hisoboti");
+            // 2. Kirimlar
+            let kirimData = state.kirim.map(k => ({
+                "Sana va Vaqt": formatDisplayDate(k.datetime),
+                "Mahsulot": getProductName(k.prodId),
+                "Miqdor": k.qty,
+                "Narxi (so'm)": k.price,
+                "Taminotchi / Izoh": k.supplier
+            }));
+            let wsKirim = XLSX.utils.json_to_sheet(kirimData);
+            XLSX.utils.book_append_sheet(workbook, wsKirim, "Kirimlar Tarixi");
+
+            // 3. Chiqimlar
+            let chiqimData = state.chiqim.map(c => ({
+                "Sana va Vaqt": formatDisplayDate(c.datetime),
+                "Bo'lim": c.bolim,
+                "Mahsulot": getProductName(c.prodId),
+                "Miqdor": c.qty
+            }));
+            let wsChiqim = XLSX.utils.json_to_sheet(chiqimData);
+            XLSX.utils.book_append_sheet(workbook, wsChiqim, "Chiqimlar Tarixi");
+
             XLSX.writeFile(workbook, `Ombor_Hisoboti_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
@@ -371,6 +484,7 @@
         }
 
         // Init App
+        setNowDateInputs();
         renderAll();
     </script>
 </body>
