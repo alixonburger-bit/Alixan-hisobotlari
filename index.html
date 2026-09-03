@@ -148,34 +148,43 @@
             </div>
         </div>
 
-        <!-- 3. HAR BIR MAHSULOT UCHUN ALOHIDA BO'LIMLI PERERABOTKA -->
+        <!-- 3. PERERABOTKA (MANBA VA MANZIL TANLOVI BILAN) -->
         <div id="pererabotka" class="tab-content">
             <div class="card">
-                <h2>⚙️ Pererabotka (Mahsulotlarni bo'limlarga tarqatish)</h2>
+                <h2>⚙️ Pererabotka & Bo'limlarga Tarqatish</h2>
                 <form id="form-pererabotka">
                     <label>Sana va Vaqt</label>
                     <input type="datetime-local" id="process-time" required>
 
-                    <!-- Sarflanadigan xomashyolar (Skladdan kamayadi) -->
+                    <label style="color: var(--danger-color); font-weight: bold;">📍 Xomashyo olinadigan manba (Qaysi bo'limdan?):</label>
+                    <select id="process-source-location" required>
+                        <option value="Sklad">📦 Asosiy Sklad</option>
+                        <option value="Oshxona">👨‍🍳 Oshxona</option>
+                        <option value="Shashlikxona">🍢 Shashlikxona</option>
+                        <option value="Somsaxona">🥟 Somsaxona</option>
+                        <option value="Fast-food">🍔 Fast-food</option>
+                    </select>
+
+                    <!-- Sarflanadigan xomashyolar -->
                     <div class="dynamic-box">
-                        <label style="color: var(--danger-color);">🔻 Ishlatiladigan Xomashyolar (Skladdan chiqim):</label>
+                        <label style="color: var(--danger-color);">🔻 Ishlatiladigan Xomashyolar (Tanlangan bo'limdan yechiladi):</label>
                         <div id="process-out-container"></div>
                         <button type="button" class="btn btn-add" onclick="addProcessOutRow()">+ Xomashyo qo'shish</button>
                     </div>
 
                     <!-- Hosil bo'ladigan va tarqatiladigan mahsulotlar -->
                     <div class="dynamic-box">
-                        <label style="color: var(--success-color);">🔺 Hosil bo'ladigan Mahsulotlar & Manzil bo'limi:</label>
+                        <label style="color: var(--success-color);">🔺 Hosil bo'ladigan Mahsulotlar & Qaysi bo'limga jo'natish:</label>
                         <div id="process-in-container"></div>
                         <button type="button" class="btn btn-add" onclick="addProcessInRow()">+ Mahsulot va Bo'lim qo'shish</button>
                     </div>
 
-                    <button type="submit" class="btn btn-process">⚙️ Pererabotka va Tarqatishni Bajarish</button>
+                    <button type="submit" class="btn btn-process">⚙️ Pererabotkani Bajarish</button>
                 </form>
             </div>
         </div>
 
-        <!-- 4. RETSEPTLAR (TEHKARTA) -->
+        <!-- 4. RETSEPTLAR -->
         <div id="retsept" class="tab-content">
             <div class="card">
                 <h2>📜 Taom Retseptini Yaratish (Kalkulyatsiya)</h2>
@@ -199,29 +208,39 @@
             </div>
         </div>
 
-        <!-- 5. O'TKAZISH -->
+        <!-- 5. HAR QANDAY BO'LIMDAN BO'LIMGA O'TKAZISH -->
         <div id="otkazish" class="tab-content">
             <div class="card">
-                <h2>🔄 Skladdan Bo'limlarga O'tkazish</h2>
+                <h2>🔄 Bo'limlararo Mahsulot O'tkazish</h2>
                 <form id="form-otkazish">
                     <label>Sana va Vaqt</label>
                     <input type="datetime-local" id="otkaz-time" required>
 
+                    <label>Qaysi bo'limdan (Manba)?</label>
+                    <select id="otkaz-from-bolim" required>
+                        <option value="Sklad">📦 Asosiy Sklad</option>
+                        <option value="Oshxona">👨‍🍳 Oshxona</option>
+                        <option value="Shashlikxona">🍢 Shashlikxona</option>
+                        <option value="Somsaxona">🥟 Somsaxona</option>
+                        <option value="Fast-food">🍔 Fast-food</option>
+                    </select>
+
+                    <label>Qaysi bo'limga (Manzil)?</label>
+                    <select id="otkaz-to-bolim" required>
+                        <option value="Oshxona">👨‍🍳 Oshxona</option>
+                        <option value="Shashlikxona">🍢 Shashlikxona</option>
+                        <option value="Somsaxona">🥟 Somsaxona</option>
+                        <option value="Fast-food">🍔 Fast-food</option>
+                        <option value="Sklad">📦 Asosiy Sklad</option>
+                    </select>
+
                     <label>Mahsulot</label>
                     <select id="otkaz-prod-id" required></select>
-                    
-                    <label>Qaysi bo'limga?</label>
-                    <select id="otkaz-bolim" required>
-                        <option value="Oshxona">Oshxona</option>
-                        <option value="Shashlikxona">Shashlikxona</option>
-                        <option value="Somsaxona">Somsaxona</option>
-                        <option value="Fast-food">Fast-food</option>
-                    </select>
 
                     <label>Miqdori</label>
                     <input type="number" step="0.001" id="otkaz-qty" placeholder="0.00" required>
 
-                    <button type="submit" class="btn">➡️ O'tkazish</button>
+                    <button type="submit" class="btn">➡️ O'tkazishni Bajarish</button>
                 </form>
             </div>
         </div>
@@ -294,9 +313,9 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); tg.ready(); }
 
-        let state = JSON.parse(localStorage.getItem('ombor_erp_db')) || {
+        let state = JSON.parse(localStorage.getItem('ombor_erp_v2_db')) || {
             products: [
-                { id: 101, name: "Go'sht (Butun Mol)", unit: "kg", min: 20 },
+                { id: 101, name: "Go'sht (Mol)", unit: "kg", min: 20 },
                 { id: 102, name: "Lahm Go'sht", unit: "kg", min: 10 },
                 { id: 103, name: "Suyak", unit: "kg", min: 5 },
                 { id: 104, name: "Qiyma", unit: "kg", min: 10 }
@@ -320,7 +339,7 @@
         }
 
         function saveData() {
-            localStorage.setItem('ombor_erp_db', JSON.stringify(state));
+            localStorage.setItem('ombor_erp_v2_db', JSON.stringify(state));
             renderAll();
         }
 
@@ -340,7 +359,7 @@
             return state.products.map(p => `<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
         }
 
-        // --- DINAMIK PERERABOTKA VA RETSEPT QATORLARI ---
+        // --- DINAMIK QATORLAR ---
         function addProcessOutRow() {
             const container = document.getElementById('process-out-container');
             const div = document.createElement('div');
@@ -384,7 +403,7 @@
             container.appendChild(div);
         }
 
-        // --- HISOBLASH VA TANNARX ---
+        // --- STOK VA HISOBLASH ---
         function getAvgPrice(prodId) {
             let totalQty = 0, totalCost = 0;
             state.kirim.filter(k => k.prodId == prodId).forEach(k => { totalQty += k.qty; totalCost += k.price; });
@@ -392,34 +411,37 @@
         }
 
         function getProductStock(prodId) {
-            let skladKirim = state.kirim.filter(k => k.prodId == prodId).reduce((s, k) => s + k.qty, 0);
-            
-            let bolimlar = { Oshxona: 0, Shashlikxona: 0, Somsaxona: 0, "Fast-food": 0 };
+            let locs = { Sklad: 0, Oshxona: 0, Shashlikxona: 0, Somsaxona: 0, "Fast-food": 0 };
 
-            // Pererabotka ta'siri
+            // 1. Kirimlar (Asosiy Skladga)
+            state.kirim.filter(k => k.prodId == prodId).forEach(k => { locs.Sklad += k.qty; });
+
+            // 2. O'tkazishlar (Bo'limdan-bo'limga)
+            state.otkazish.filter(o => o.prodId == prodId).forEach(o => {
+                if(locs[o.from] !== undefined) locs[o.from] -= o.qty;
+                if(locs[o.to] !== undefined) locs[o.to] += o.qty;
+            });
+
+            // 3. Pererabotka amallari
             state.pererabotka.forEach(p => {
-                p.outItems.forEach(out => { if(out.prodId == prodId) skladKirim -= out.qty; });
-                p.inItems.forEach(inItem => { 
-                    if(inItem.prodId == prodId) {
-                        if(inItem.target === 'Sklad') {
-                            skladKirim += inItem.qty;
-                        } else if(bolimlar[inItem.target] !== undefined) {
-                            bolimlar[inItem.target] += inItem.qty;
-                        }
+                p.outItems.forEach(out => {
+                    if(out.prodId == prodId && locs[p.source] !== undefined) {
+                        locs[p.source] -= out.qty;
+                    }
+                });
+                p.inItems.forEach(inItem => {
+                    if(inItem.prodId == prodId && locs[inItem.target] !== undefined) {
+                        locs[inItem.target] += inItem.qty;
                     }
                 });
             });
 
-            let skladOtkaz = state.otkazish.filter(o => o.prodId == prodId).reduce((s, o) => s + o.qty, 0);
-            let omborQoldiq = skladKirim - skladOtkaz;
-
-            ["Oshxona", "Shashlikxona", "Somsaxona", "Fast-food"].forEach(b => {
-                let bKirim = state.otkazish.filter(o => o.prodId == prodId && o.bolim === b).reduce((s, o) => s + o.qty, 0);
-                let bChiqim = state.chiqim.filter(c => c.prodId == prodId && c.bolim === b).reduce((s, c) => s + c.qty, 0);
-                bolimlar[b] += (bKirim - bChiqim);
+            // 4. Sotuv orqali Chiqimlar
+            state.chiqim.filter(c => c.prodId == prodId).forEach(c => {
+                if(locs[c.bolim] !== undefined) locs[c.bolim] -= c.qty;
             });
 
-            return { omborQoldiq, bolimlar };
+            return { omborQoldiq: locs.Sklad, bolimlar: locs };
         }
 
         // --- RENDER ---
@@ -492,7 +514,7 @@
             });
         }
 
-        // --- EVENT HANDLERS ---
+        // --- FORM EVENTS ---
         document.getElementById('form-add-product').addEventListener('submit', (e) => {
             e.preventDefault();
             state.products.push({
@@ -518,6 +540,7 @@
 
         document.getElementById('form-pererabotka').addEventListener('submit', (e) => {
             e.preventDefault();
+            let source = document.getElementById('process-source-location').value;
             let outItems = [], inItems = [];
 
             document.querySelectorAll('#process-out-container .multi-row').forEach(row => {
@@ -540,11 +563,12 @@
 
             state.pererabotka.push({
                 datetime: document.getElementById('process-time').value,
+                source: source,
                 outItems: outItems,
                 inItems: inItems
             });
 
-            saveData(); setNowDateInputs(); alert("Pererabotka bajarildi va mahsulotlar belgilangan bo'limlarga tarqatildi!");
+            saveData(); setNowDateInputs(); alert(`${source} bo'limidan pererabotka va tarqatish bajarildi!`);
         });
 
         document.getElementById('form-retsept').addEventListener('submit', (e) => {
@@ -564,13 +588,25 @@
 
         document.getElementById('form-otkazish').addEventListener('submit', (e) => {
             e.preventDefault();
+            let from = document.getElementById('otkaz-from-bolim').value;
+            let to = document.getElementById('otkaz-to-bolim').value;
+            let prodId = parseInt(document.getElementById('otkaz-prod-id').value);
+            let qty = parseFloat(document.getElementById('otkaz-qty').value);
+
+            if(from === to) {
+                alert("⚠️ Bitta bo'limdan o'ziga o'tkazib bo'lmaydi!");
+                return;
+            }
+
             state.otkazish.push({
                 datetime: document.getElementById('otkaz-time').value,
-                prodId: parseInt(document.getElementById('otkaz-prod-id').value),
-                bolim: document.getElementById('otkaz-bolim').value,
-                qty: parseFloat(document.getElementById('otkaz-qty').value)
+                from: from,
+                to: to,
+                prodId: prodId,
+                qty: qty
             });
-            saveData(); setNowDateInputs(); alert("O'tkazildi!");
+
+            saveData(); setNowDateInputs(); alert(`${from} bo'limidan ${to} bo'limiga o'tkazildi!`);
         });
 
         document.getElementById('form-sotuv').addEventListener('submit', (e) => {
@@ -611,7 +647,7 @@
 
         function clearData() {
             if(confirm("Barcha ma'lumotlarni o'chirishga ishonchingiz komilmi?")) {
-                localStorage.removeItem('ombor_erp_db'); location.reload();
+                localStorage.removeItem('ombor_erp_v2_db'); location.reload();
             }
         }
 
