@@ -160,7 +160,7 @@
             <form id="form-product">
                 <div class="form-group">
                     <label>Mahsulot Nomi</label>
-                    <input type="text" id="p-name" required placeholder="Masalan: Go'sht, Go'shtli Somsa">
+                    <input type="text" id="p-name" required placeholder="Masalan: Go'sht, Somsa, Qiymali shashlik">
                 </div>
                 <div class="form-group">
                     <label>O'lchov Birligi</label>
@@ -169,6 +169,7 @@
                         <option value="litr">litr</option>
                         <option value="dona">dona</option>
                         <option value="portsiya">portsiya</option>
+                        <option value="sikh">sikh (sish)</option>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Saqlash</button>
@@ -184,7 +185,8 @@
                             <th>Mahsulot</th>
                             <th>Asosiy Ombor</th>
                             <th>Oshxona</th>
-                            <th>Bar</th>
+                            <th>Shashlikxona</th>
+                            <th>Somsaxona</th>
                             <th>Jami</th>
                         </tr>
                     </thead>
@@ -235,7 +237,8 @@
                     <select id="pr-source">
                         <option value="ombor">Asosiy Ombor</option>
                         <option value="oshxona">Oshxona</option>
-                        <option value="bar">Bar</option>
+                        <option value="shashlikxona">Shashlikxona</option>
+                        <option value="somsaxona">Somsaxona</option>
                     </select>
                 </div>
 
@@ -286,11 +289,13 @@
                     <label>Qaysi bo'limdan sotildi?</label>
                     <select id="s-dept">
                         <option value="oshxona">Oshxona</option>
-                        <option value="bar">Bar</option>
+                        <option value="shashlikxona">Shashlikxona</option>
+                        <option value="somsaxona">Somsaxona</option>
+                        <option value="ombor">Asosiy Ombor</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Sotilgan Taom</label>
+                    <label>Sotilgan Taom / Mahsulot</label>
                     <select id="s-prod" required></select>
                 </div>
                 <div class="form-group">
@@ -374,7 +379,7 @@
         }
 
         function getProductStock(prodId) {
-            let bolimlar = { ombor: 0, oshxona: 0, bar: 0 };
+            let bolimlar = { ombor: 0, oshxona: 0, shashlikxona: 0, somsaxona: 0 };
             
             state.kirim.filter(k => k.prodId == prodId).forEach(k => {
                 bolimlar.ombor += Number(k.qty);
@@ -424,14 +429,15 @@
 
             state.products.forEach(p => {
                 const stock = getProductStock(p.id);
-                const total = stock.ombor + stock.oshxona + stock.bar;
+                const total = stock.ombor + stock.oshxona + stock.shashlikxona + stock.somsaxona;
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${p.name}</strong> <span class="badge">${p.unit}</span></td>
                     <td style="color:${stock.ombor < 0 ? 'red': 'black'}">${stock.ombor.toFixed(2)}</td>
                     <td style="color:${stock.oshxona < 0 ? 'red': 'black'}">${stock.oshxona.toFixed(2)}</td>
-                    <td style="color:${stock.bar < 0 ? 'red': 'black'}">${stock.bar.toFixed(2)}</td>
+                    <td style="color:${stock.shashlikxona < 0 ? 'red': 'black'}">${stock.shashlikxona.toFixed(2)}</td>
+                    <td style="color:${stock.somsaxona < 0 ? 'red': 'black'}">${stock.somsaxona.toFixed(2)}</td>
                     <td><strong>${total.toFixed(2)}</strong></td>
                 `;
                 tbody.appendChild(tr);
@@ -484,8 +490,9 @@
                 <input type="number" step="0.001" placeholder="Miqdor" class="pr-in-qty" required>
                 <select class="pr-in-dept">
                     <option value="oshxona">Oshxona</option>
-                    <option value="bar">Bar</option>
-                    <option value="ombor">Ombor</option>
+                    <option value="shashlikxona">Shashlikxona</option>
+                    <option value="somsaxona">Somsaxona</option>
+                    <option value="ombor">Asosiy Ombor</option>
                 </select>
                 <button type="button" onclick="this.parentElement.remove()">✕</button>
             `;
@@ -616,10 +623,7 @@
             document.getElementById('m-profit').innerText = (totalRevenue - totalCogs).toLocaleString() + " so'm";
         }
 
-        // ==========================================
-        // EXCELGA EXPORT QILISH FUNKSIYALARI (SHEETJS)
-        // ==========================================
-
+        // EXCELGA EXPORT QILISH FUNKSIYALARI
         function exportStockToExcel() {
             const data = state.products.map(p => {
                 const stock = getProductStock(p.id);
@@ -628,8 +632,9 @@
                     "O'lchov Birligi": p.unit,
                     "Asosiy Ombor": stock.ombor,
                     "Oshxona": stock.oshxona,
-                    "Bar": stock.bar,
-                    "Jami Qoldiq": stock.ombor + stock.oshxona + stock.bar
+                    "Shashlikxona": stock.shashlikxona,
+                    "Somsaxona": stock.somsaxona,
+                    "Jami Qoldiq": stock.ombor + stock.oshxona + stock.shashlikxona + stock.somsaxona
                 };
             });
 
@@ -681,11 +686,9 @@
 
             const workbook = XLSX.utils.book_new();
             
-            // 1-list: Umumiy xulosa
             const summarySheet = XLSX.utils.json_to_sheet(summaryData);
             XLSX.utils.book_append_sheet(workbook, summarySheet, "Umumiy Moliya");
 
-            // 2-list: Sotuvlar tafsiloti
             const salesSheet = XLSX.utils.json_to_sheet(salesDetails);
             XLSX.utils.book_append_sheet(workbook, salesSheet, "Sotuvlar Tafsiloti");
 
