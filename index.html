@@ -118,7 +118,7 @@
         .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .btn-success { background: var(--success); color: white; border: none; font-weight: bold; cursor: pointer; }
         .btn-warning { background: var(--warning); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-excel { background: var(--excel); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-excel { background: var(--excel); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 8px; }
         .btn-secondary { background: #6b7280; color: white; border: none; margin-bottom: 8px; cursor: pointer; }
         .btn-danger { background: var(--danger); color: white; border: none; font-weight: bold; cursor: pointer; }
 
@@ -204,7 +204,26 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <button class="btn btn-excel" onclick="exportStockToExcel()">📥 Ombor Hisobotini Excelga Yuklash</button>
+            
+            <hr style="margin: 16px 0; border: none; border-top: 1px dashed var(--border);">
+            
+            <h3>Excelga Yuklab Olish:</h3>
+            <button class="btn btn-excel" onclick="exportStockToExcel()">📥 Barcha Qoldiqlarni Excelga Yuklash</button>
+            <button class="btn btn-excel" style="background-color: #0d9488;" onclick="exportKirimChiqimToExcel()">📑 Barcha Kirim-Chiqimlar Tarixini Yuklash</button>
+
+            <!-- ALOHIDA SKLAD BO'YICHA EXPORT -->
+            <div style="margin-top: 16px; background: #f9fafb; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                <label>📌 Alohida Sklad / Bo'lim hisobotini yuklash:</label>
+                <div style="display: flex; gap: 8px; margin-top: 6px;">
+                    <select id="export-dept-select" style="flex: 2;">
+                        <option value="ombor">Asosiy Ombor</option>
+                        <option value="oshxona">Oshxona</option>
+                        <option value="shashlikxona">Shashlikxona</option>
+                        <option value="somsaxona">Somsaxona</option>
+                    </select>
+                    <button class="btn btn-primary" style="flex: 1;" onclick="exportSingleDeptToExcel()">📊 Yuklash</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -248,7 +267,7 @@
             </form>
         </div>
 
-        <!-- KIRIMLAR JADVALI (Tahrirlash va Bekor qilish) -->
+        <!-- KIRIMLAR JADVALI -->
         <div class="card">
             <h2>Kirimlar Tarixi</h2>
             <div style="overflow-x:auto;">
@@ -509,7 +528,6 @@
             });
         }
 
-        // KIRIMLAR TARIXI VA AMALLAR (Tahrirlash / O'chirish)
         function renderKirimHistory() {
             const tbody = document.querySelector('#table-kirim-history tbody');
             tbody.innerHTML = '';
@@ -603,14 +621,12 @@
             const price = parseFloat(document.getElementById('k-price').value);
 
             if (editId) {
-                // TAHRIRLASH
                 const index = state.kirim.findIndex(k => k.id == editId);
                 if (index !== -1) {
                     state.kirim[index] = { id: Number(editId), date, dept, prodId, qty, price };
                     alert('Kirim tahrirlandi va saqlandi!');
                 }
             } else {
-                // YANGI KIRIM
                 state.kirim.push({
                     id: Date.now(),
                     date,
@@ -779,7 +795,7 @@
             document.getElementById('m-profit').innerText = (totalRevenue - totalCogs).toLocaleString() + " so'm";
         }
 
-        // EXCELGA EXPORT QILISH
+        // EXCELGA EXPORT QILISH FUNKSIYALARI
         function exportStockToExcel() {
             const data = state.products.map(p => {
                 const stock = getProductStock(p.id);
@@ -798,7 +814,142 @@
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Ombor Qoldiqlari");
 
-            const fileName = `Ombor_Hisoboti_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            const fileName = `Ombor_Qoldiqlari_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+        }
+
+        function exportKirimChiqimToExcel() {
+            const workbook = XLSX.utils.book_new();
+
+            // 1. Kirimlar
+            const kirimData = state.kirim.map(k => {
+                const prod = state.products.find(p => p.id == k.prodId);
+                return {
+                    "Sana": k.date ? k.date.replace('T', ' ') : '',
+                    "Bo'lim / Sklad": (deptNames[k.dept] || k.dept).toUpperCase(),
+                    "Mahsulot Nomi": prod ? prod.name : 'Noma\'lum',
+                    "Miqdori": k.qty,
+                    "O'lchov Birligi": prod ? prod.unit : '',
+                    "Jami Summa (so'm)": k.price
+                };
+            });
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(kirimData), "Kirimlar Tarixi");
+
+            // 2. Pererabotka
+            const pererabotkaData = [];
+            state.pererabotka.forEach(p => {
+                const sourceDept = (deptNames[p.source] || p.source).toUpperCase();
+                p.outItems.forEach(out => {
+                    const prod = state.products.find(pr => pr.id == out.prodId);
+                    pererabotkaData.push({
+                        "Sana": p.date ? p.date.replace('T', ' ') : '',
+                        "Operatsiya": "Chiqim (Sarflandi)",
+                        "Manba Bo'lim": sourceDept,
+                        "Qabul Qiluvchi Bo'lim": "-",
+                        "Mahsulot": prod ? prod.name : 'Noma\'lum',
+                        "Miqdori": out.qty,
+                        "O'lchov Birligi": prod ? prod.unit : ''
+                    });
+                });
+                p.inItems.forEach(inItem => {
+                    const prod = state.products.find(pr => pr.id == inItem.prodId);
+                    const targetDept = (deptNames[inItem.dept] || inItem.dept).toUpperCase();
+                    pererabotkaData.push({
+                        "Sana": p.date ? p.date.replace('T', ' ') : '',
+                        "Operatsiya": "Kirim (Olingan)",
+                        "Manba Bo'lim": sourceDept,
+                        "Qabul Qiluvchi Bo'lim": targetDept,
+                        "Mahsulot": prod ? prod.name : 'Noma\'lum',
+                        "Miqdori": inItem.qty,
+                        "O'lchov Birligi": prod ? prod.unit : ''
+                    });
+                });
+            });
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(pererabotkaData), "Pererabotka Tarixi");
+
+            // 3. Sotuv
+            const salesData = state.sales.map(s => {
+                const prod = state.products.find(p => p.id == s.prodId);
+                return {
+                    "Sana": s.date ? s.date.replace('T', ' ') : '',
+                    "Sotilgan Bo'lim": (deptNames[s.dept] || s.dept).toUpperCase(),
+                    "Taom / Mahsulot": prod ? prod.name : 'Noma\'lum',
+                    "Miqdor": s.qty,
+                    "O'lchov Birligi": prod ? prod.unit : '',
+                    "Sotish Narxi": s.price,
+                    "Jami Tushum": s.qty * s.price
+                };
+            });
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(salesData), "Sotuv va Chiqimlar");
+
+            const fileName = `Barcha_Kirim_Chiqimlar_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+        }
+
+        // TANLANGAN SKLAD BO'YICHA EXPORT QILISH
+        function exportSingleDeptToExcel() {
+            const selectedDept = document.getElementById('export-dept-select').value;
+            const deptTitle = deptNames[selectedDept] || selectedDept;
+            const workbook = XLSX.utils.book_new();
+
+            // 1. Skladning Hozirgi Qoldig'i
+            const deptStockData = state.products.map(p => {
+                const stock = getProductStock(p.id);
+                return {
+                    "Mahsulot Nomi": p.name,
+                    "O'lchov Birligi": p.unit,
+                    "Mavjud Qoldiq": stock[selectedDept] || 0
+                };
+            }).filter(item => item["Mavjud Qoldiq"] !== 0);
+
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(deptStockData), "Hozirgi Qoldiq");
+
+            // 2. Sklad Kirimlari
+            const deptKirim = state.kirim.filter(k => (k.dept || 'ombor') === selectedDept).map(k => {
+                const prod = state.products.find(p => p.id == k.prodId);
+                return {
+                    "Sana": k.date ? k.date.replace('T', ' ') : '',
+                    "Mahsulot": prod ? prod.name : 'Noma\'lum',
+                    "Miqdori": k.qty,
+                    "O'lchov Birligi": prod ? prod.unit : '',
+                    "Jami Narxi": k.price
+                };
+            });
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(deptKirim), "Kirimlar");
+
+            // 3. Sklad Chiqimlari (Pererabotka / Sarf)
+            const deptChiqim = [];
+            state.pererabotka.forEach(p => {
+                if (p.source === selectedDept) {
+                    p.outItems.forEach(out => {
+                        const prod = state.products.find(pr => pr.id == out.prodId);
+                        deptChiqim.push({
+                            "Sana": p.date ? p.date.replace('T', ' ') : '',
+                            "Operatsiya": "Sarflandi / Qayta ishlandi",
+                            "Mahsulot": prod ? prod.name : 'Noma\'lum',
+                            "Miqdori": out.qty,
+                            "O'lchov Birligi": prod ? prod.unit : ''
+                        });
+                    });
+                }
+            });
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(deptChiqim), "Sarf va Chiqimlar");
+
+            // 4. Sklad Sotuvlari
+            const deptSales = state.sales.filter(s => s.dept === selectedDept).map(s => {
+                const prod = state.products.find(p => p.id == s.prodId);
+                return {
+                    "Sana": s.date ? s.date.replace('T', ' ') : '',
+                    "Taom / Mahsulot": prod ? prod.name : 'Noma\'lum',
+                    "Sotilgan Miqdor": s.qty,
+                    "O'lchov Birligi": prod ? prod.unit : '',
+                    "Sotish Narxi": s.price,
+                    "Jami Summa": s.qty * s.price
+                };
+            });
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(deptSales), "Sotuvlar");
+
+            const fileName = `${deptTitle}_Hisoboti_${new Date().toISOString().slice(0, 10)}.xlsx`;
             XLSX.writeFile(workbook, fileName);
         }
 
@@ -823,7 +974,7 @@
                 totalCogs += cogs;
 
                 return {
-                    "Sana": s.date,
+                    "Sana": s.date ? s.date.replace('T', ' ') : '',
                     "Bo'lim": (deptNames[s.dept] || s.dept).toUpperCase(),
                     "Taom / Mahsulot": prod ? prod.name : 'Noma\'lum',
                     "Miqdori": s.qty,
