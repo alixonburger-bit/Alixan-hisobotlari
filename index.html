@@ -16,6 +16,7 @@
             --danger: #ef4444;
             --success: #10b981;
             --excel: #16a34a;
+            --warning: #f59e0b;
             --text: #1f2937;
             --border: #e5e7eb;
         }
@@ -116,8 +117,18 @@
 
         .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .btn-success { background: var(--success); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .btn-warning { background: var(--warning); color: white; border: none; font-weight: bold; cursor: pointer; }
         .btn-excel { background: var(--excel); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-secondary { background: #6b7280; color: white; border: none; margin-bottom: 8px; cursor: pointer; }
+        .btn-danger { background: var(--danger); color: white; border: none; font-weight: bold; cursor: pointer; }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+            width: auto;
+            display: inline-block;
+            margin-right: 4px;
+        }
 
         table {
             width: 100%;
@@ -200,8 +211,9 @@
     <!-- KIRIM -->
     <div id="kirim" class="tab-content">
         <div class="card">
-            <h2>Bo'limlarga Kirim Qilish</h2>
+            <h2 id="kirim-form-title">Bo'limlarga Kirim Qilish</h2>
             <form id="form-kirim">
+                <input type="hidden" id="k-edit-id" value="">
                 <div class="form-group">
                     <label>Sana</label>
                     <input type="datetime-local" id="k-date" required>
@@ -231,8 +243,29 @@
                     <label>Jami Summa (so'm)</label>
                     <input type="number" id="k-price" required min="0" placeholder="Avto hisoblanadi">
                 </div>
-                <button type="submit" class="btn btn-success">Kirimni Saqlash</button>
+                <button type="submit" id="btn-kirim-submit" class="btn btn-success">Kirimni Saqlash</button>
+                <button type="button" id="btn-kirim-cancel" class="btn btn-secondary" style="display:none; margin-top:8px;" onclick="resetKirimForm()">Bekor qilish</button>
             </form>
+        </div>
+
+        <!-- KIRIMLAR JADVALI (Tahrirlash va Bekor qilish) -->
+        <div class="card">
+            <h2>Kirimlar Tarixi</h2>
+            <div style="overflow-x:auto;">
+                <table id="table-kirim-history">
+                    <thead>
+                        <tr>
+                            <th>Sana</th>
+                            <th>Bo'lim</th>
+                            <th>Mahsulot</th>
+                            <th>Miqdor</th>
+                            <th>Jami Summa</th>
+                            <th>Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -358,9 +391,17 @@
             sales: []
         };
 
+        const deptNames = {
+            ombor: "Asosiy Ombor",
+            oshxona: "Oshxona",
+            shashlikxona: "Shashlikxona",
+            somsaxona: "Somsaxona"
+        };
+
         function saveData() {
             localStorage.setItem('restoran_db', JSON.stringify(state));
             renderStock();
+            renderKirimHistory();
             renderFinancials();
             updateSelects();
         }
@@ -374,7 +415,9 @@
 
         function setNowDateInputs() {
             const now = new Date().toISOString().slice(0, 16);
-            document.querySelectorAll('input[type="datetime-local"]').forEach(i => i.value = now);
+            document.querySelectorAll('input[type="datetime-local"]').forEach(i => {
+                if(!i.value) i.value = now;
+            });
         }
 
         function updateSelects() {
@@ -466,6 +509,78 @@
             });
         }
 
+        // KIRIMLAR TARIXI VA AMALLAR (Tahrirlash / O'chirish)
+        function renderKirimHistory() {
+            const tbody = document.querySelector('#table-kirim-history tbody');
+            tbody.innerHTML = '';
+
+            const sortedKirim = [...state.kirim].reverse();
+
+            sortedKirim.forEach(k => {
+                const prod = state.products.find(p => p.id == k.prodId);
+                const prodName = prod ? prod.name : "Noma'lum";
+                const unit = prod ? prod.unit : "";
+                const deptTitle = deptNames[k.dept || 'ombor'] || k.dept;
+                const formattedDate = k.date ? k.date.replace('T', ' ') : '';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td><span class="badge">${deptTitle}</span></td>
+                    <td><strong>${prodName}</strong></td>
+                    <td>${k.qty} ${unit}</td>
+                    <td>${Number(k.price).toLocaleString()} so'm</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editKirim(${k.id})">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteKirim(${k.id})">🗑</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editKirim(id) {
+            const item = state.kirim.find(k => k.id === id);
+            if (!item) return;
+
+            document.getElementById('k-edit-id').value = item.id;
+            document.getElementById('k-date').value = item.date;
+            document.getElementById('k-dept').value = item.dept || 'ombor';
+            document.getElementById('k-prod').value = item.prodId;
+            document.getElementById('k-qty').value = item.qty;
+            document.getElementById('k-price').value = item.price;
+            
+            if (item.qty > 0) {
+                document.getElementById('k-unit-price').value = (item.price / item.qty).toFixed(0);
+            }
+
+            document.getElementById('kirim-form-title').innerText = "Kirimni Tahrirlash";
+            document.getElementById('btn-kirim-submit').innerText = "O'zgarishlarni Saqlash";
+            document.getElementById('btn-kirim-cancel').style.display = "block";
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetKirimForm() {
+            document.getElementById('k-edit-id').value = "";
+            document.getElementById('k-qty').value = "";
+            document.getElementById('k-unit-price').value = "";
+            document.getElementById('k-price').value = "";
+            
+            document.getElementById('kirim-form-title').innerText = "Bo'limlarga Kirim Qilish";
+            document.getElementById('btn-kirim-submit').innerText = "Kirimni Saqlash";
+            document.getElementById('btn-kirim-cancel').style.display = "none";
+            setNowDateInputs();
+        }
+
+        function deleteKirim(id) {
+            if (confirm("Ushbu kirimni bekor qilmoqchimisiz? Ombor qoldig'i qayta hisoblanadi.")) {
+                state.kirim = state.kirim.filter(k => k.id !== id);
+                saveData();
+                alert("Kirim o'chirildi (bekor qilindi)!");
+            }
+        }
+
         document.getElementById('form-product').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('p-name').value;
@@ -479,19 +594,36 @@
 
         document.getElementById('form-kirim').addEventListener('submit', (e) => {
             e.preventDefault();
-            state.kirim.push({
-                id: Date.now(),
-                date: document.getElementById('k-date').value,
-                dept: document.getElementById('k-dept').value,
-                prodId: document.getElementById('k-prod').value,
-                qty: parseFloat(document.getElementById('k-qty').value),
-                price: parseFloat(document.getElementById('k-price').value)
-            });
+            
+            const editId = document.getElementById('k-edit-id').value;
+            const date = document.getElementById('k-date').value;
+            const dept = document.getElementById('k-dept').value;
+            const prodId = document.getElementById('k-prod').value;
+            const qty = parseFloat(document.getElementById('k-qty').value);
+            const price = parseFloat(document.getElementById('k-price').value);
+
+            if (editId) {
+                // TAHRIRLASH
+                const index = state.kirim.findIndex(k => k.id == editId);
+                if (index !== -1) {
+                    state.kirim[index] = { id: Number(editId), date, dept, prodId, qty, price };
+                    alert('Kirim tahrirlandi va saqlandi!');
+                }
+            } else {
+                // YANGI KIRIM
+                state.kirim.push({
+                    id: Date.now(),
+                    date,
+                    dept,
+                    prodId,
+                    qty,
+                    price
+                });
+                alert('Kirim bajarildi!');
+            }
+
+            resetKirimForm();
             saveData();
-            document.getElementById('k-qty').value = '';
-            document.getElementById('k-unit-price').value = '';
-            document.getElementById('k-price').value = '';
-            alert('Kirim bajarildi!');
         });
 
         function addProcessOutRow() {
@@ -692,7 +824,7 @@
 
                 return {
                     "Sana": s.date,
-                    "Bo'lim": s.dept.toUpperCase(),
+                    "Bo'lim": (deptNames[s.dept] || s.dept).toUpperCase(),
                     "Taom / Mahsulot": prod ? prod.name : 'Noma\'lum',
                     "Miqdori": s.qty,
                     "Sotish Narxi (1 dona)": s.price,
