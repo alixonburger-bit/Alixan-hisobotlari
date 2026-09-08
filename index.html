@@ -200,11 +200,20 @@
     <!-- KIRIM -->
     <div id="kirim" class="tab-content">
         <div class="card">
-            <h2>Omborga Kirim Qilish</h2>
+            <h2>Bo'limlarga Kirim Qilish</h2>
             <form id="form-kirim">
                 <div class="form-group">
                     <label>Sana</label>
                     <input type="datetime-local" id="k-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Qaysi bo'lim/skladga kirim qilinadi?</label>
+                    <select id="k-dept" required>
+                        <option value="ombor">Asosiy Ombor</option>
+                        <option value="oshxona">Oshxona</option>
+                        <option value="shashlikxona">Shashlikxona</option>
+                        <option value="somsaxona">Somsaxona</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Mahsulot</label>
@@ -382,7 +391,8 @@
             let bolimlar = { ombor: 0, oshxona: 0, shashlikxona: 0, somsaxona: 0 };
             
             state.kirim.filter(k => k.prodId == prodId).forEach(k => {
-                bolimlar.ombor += Number(k.qty);
+                const targetDept = k.dept || 'ombor';
+                bolimlar[targetDept] += Number(k.qty);
             });
 
             state.pererabotka.forEach(p => {
@@ -460,6 +470,7 @@
             state.kirim.push({
                 id: Date.now(),
                 date: document.getElementById('k-date').value,
+                dept: document.getElementById('k-dept').value,
                 prodId: document.getElementById('k-prod').value,
                 qty: parseFloat(document.getElementById('k-qty').value),
                 price: parseFloat(document.getElementById('k-price').value)
@@ -467,7 +478,7 @@
             saveData();
             document.getElementById('k-qty').value = '';
             document.getElementById('k-price').value = '';
-            alert('Kirim qilindi!');
+            alert('Kirim bajarildi!');
         });
 
         function addProcessOutRow() {
@@ -623,7 +634,7 @@
             document.getElementById('m-profit').innerText = (totalRevenue - totalCogs).toLocaleString() + " so'm";
         }
 
-        // EXCELGA EXPORT QILISH FUNKSIYALARI
+        // EXCELGA EXPORT QILISH
         function exportStockToExcel() {
             const data = state.products.map(p => {
                 const stock = getProductStock(p.id);
